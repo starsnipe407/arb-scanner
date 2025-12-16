@@ -32,6 +32,7 @@
     "zod": "^4.2.1"
   },
   "dependencies": {
+    "bottleneck": "^2.19.5",
     "fuse.js": "^7.1.0"
   }
 }

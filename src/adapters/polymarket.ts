@@ -2,6 +2,10 @@ import axios from 'axios';
 import { z } from 'zod';
 import { Decimal } from 'decimal.js';
 import { StandardMarket } from '../types.js';
+import { polyMarketLimiter } from '../utils/rateLimiter.js';
+import { APIError, ValidationError, classifyError } from '../utils/errors.js';
+import { logger } from '../utils/logger.js';
+import { retryWithBackoff } from '../utils/helpers.js';
 
 /**
  * Zod schema for PolyMarket API response validation
@@ -30,42 +34,97 @@ export class PolyMarketAdapter {
 
   /**
    * Fetch all active markets (limit to recent/popular ones for now)
+   * Uses rate limiting and automatic retries with exponential backoff
    */
   async fetchMarkets(limit = 20): Promise<StandardMarket[]> {
-    try {
-      const response = await axios.get(`${this.baseUrl}/markets`, {
-        params: {
-          limit,
-          active: true, // Only active markets
-          closed: false,
-        },
-        timeout: 10000, // 10 second timeout
+    const operation = async () => {
+      // Wrap API call with rate limiter
+      return await polyMarketLimiter.schedule(async () => {
+        try {
+          logger.debug(`Fetching ${limit} markets from PolyMarket...`);
+          
+          const response = await axios.get(`${this.baseUrl}/markets`, {
+            params: {
+              limit,
+              active: true, // Only active markets
+              closed: false,
+            },
+            timeout: 10000, // 10 second timeout
+          });
+
+          // Validate response with Zod
+          let validatedData;
+          try {
+            validatedData = PolyMarketResponseSchema.parse(response.data);
+          } catch (zodError) {
+            throw new ValidationError(
+              'Invalid response format from PolyMarket',
+              response.data,
+              zodError
+            );
+          }
+
+          // Transform to StandardMarket format
+          const markets = validatedData.map(market => this.toStandardMarket(market));
+          logger.success(`Fetched ${markets.length} markets from PolyMarket`);
+          
+          return markets;
+        } catch (error) {
+          // Classify error type
+          const classifiedError = classifyError(error, 'PolyMarket');
+          logger.error(`PolyMarket API error: ${classifiedError.message}`);
+          throw classifiedError;
+        }
       });
+    };
 
-      // Validate response with Zod
-      const validatedData = PolyMarketResponseSchema.parse(response.data);
-
-      // Transform to StandardMarket format
-      return validatedData.map(market => this.toStandardMarket(market));
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        console.error('PolyMarket API Error:', error.message);
-        throw new Error(`Failed to fetch PolyMarket data: ${error.message}`);
-      }
-      throw error;
-    }
-  }
+    // Retry with exponential backoff for retryable errors
+    return retryWithBackoff(operation, {
+      maxRetries: 3,
+      initialDelay: 1000,
+      maxDelay: 10000,
+      shouldRetry: (error) => {
+        // Only retry APIErrors that are retryable
+        if (error instanceof APIError) {
+          return error.isRetryable();
+        }
+        return false;
+        }
+    });
+}
 
   /**
    * Fetch a single market by ID (useful for testing)
+   * Uses rate limiting and error handling
    */
   async fetchMarketById(marketId: string): Promise<StandardMarket | null> {
     try {
-      const response = await axios.get(`${this.baseUrl}/markets/${marketId}`);
-      const validatedData = PolyMarketEventSchema.parse(response.data);
-      return this.toStandardMarket(validatedData);
+      const market = await polyMarketLimiter.schedule(async () => {
+        logger.debug(`Fetching market ${marketId} from PolyMarket...`);
+        
+        const response = await axios.get(`${this.baseUrl}/markets/${marketId}`, {
+          timeout: 10000,
+        });
+
+        let validatedData;
+        try {
+          validatedData = PolyMarketEventSchema.parse(response.data);
+        } catch (zodError) {
+          throw new ValidationError(
+            `Invalid market data for ${marketId}`,
+            response.data,
+            zodError
+          );
+        }
+
+        return this.toStandardMarket(validatedData);
+      });
+
+      logger.success(`Fetched market ${marketId} from PolyMarket`);
+      return market;
     } catch (error) {
-      console.error(`Failed to fetch market ${marketId}:`, error);
+      const classifiedError = classifyError(error, 'PolyMarket');
+      logger.error(`Failed to fetch market ${marketId}: ${classifiedError.message}`);
       return null;
     }
   }

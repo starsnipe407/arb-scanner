@@ -2,6 +2,10 @@ import axios from 'axios';
 import { z } from 'zod';
 import { Decimal } from 'decimal.js';
 import { StandardMarket } from '../types.js';
+import { manifoldLimiter } from '../utils/rateLimiter.js';
+import { APIError, ValidationError, classifyError } from '../utils/errors.js';
+import { logger } from '../utils/logger.js';
+import { retryWithBackoff } from '../utils/helpers.js';
 
 /**
  * Zod schema for Manifold Markets API response validation
@@ -39,6 +43,7 @@ export class ManifoldAdapter {
 
   /**
    * Fetch binary markets (Yes/No only)
+   * Uses rate limiting and automatic retries with exponential backoff
    * 
    * Why binary only?
    * - Multi-choice markets are complex (3+ outcomes)
@@ -48,30 +53,58 @@ export class ManifoldAdapter {
    * @param limit - How many markets to fetch
    */
   async fetchMarkets(limit = 20): Promise<StandardMarket[]> {
-    try {
-      const response = await axios.get(`${this.baseUrl}/markets`, {
-        params: {
-          limit: limit * 2, // Fetch extra because we'll filter for binary
-        },
-        timeout: 10000,
+    const operation = async () => {
+      return await manifoldLimiter.schedule(async () => {
+        try {
+          logger.debug(`Fetching ${limit} markets from Manifold...`);
+          
+          const response = await axios.get(`${this.baseUrl}/markets`, {
+            params: {
+              limit: limit * 2, // Fetch extra because we'll filter for binary
+            },
+            timeout: 10000,
+          });
+
+          // Validate response
+          let validatedData;
+          try {
+            validatedData = ManifoldResponseSchema.parse(response.data);
+          } catch (zodError) {
+            throw new ValidationError(
+              'Invalid response format from Manifold',
+              response.data,
+              zodError
+            );
+          }
+
+          // Filter and transform
+          const binaryMarkets = validatedData
+            .filter(market => this.isBinaryMarket(market))
+            .slice(0, limit)
+            .map(market => this.toStandardMarket(market));
+
+          logger.success(`Fetched ${binaryMarkets.length} binary markets from Manifold`);
+          return binaryMarkets;
+        } catch (error) {
+          const classifiedError = classifyError(error, 'Manifold');
+          logger.error(`Manifold API error: ${classifiedError.message}`);
+          throw classifiedError;
+        }
       });
+    };
 
-      const validatedData = ManifoldResponseSchema.parse(response.data);
-
-      // Filter and transform
-      const binaryMarkets = validatedData
-        .filter(market => this.isBinaryMarket(market))
-        .slice(0, limit) // Take only the limit we need
-        .map(market => this.toStandardMarket(market));
-
-      return binaryMarkets;
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        console.error('Manifold API Error:', error.message);
-        throw new Error(`Failed to fetch Manifold data: ${error.message}`);
-      }
-      throw error;
-    }
+    // Retry with exponential backoff for retryable errors
+    return retryWithBackoff(operation, {
+      maxRetries: 3,
+      initialDelay: 1000,
+      maxDelay: 10000,
+      shouldRetry: (error) => {
+        if (error instanceof APIError) {
+          return error.isRetryable();
+        }
+        return false;
+      },
+    });
   }
 
   /**
@@ -127,21 +160,44 @@ export class ManifoldAdapter {
 
   /**
    * Fetch a single market by slug
+   * Uses rate limiting and error handling
    * (Useful for debugging specific markets)
    */
   async fetchMarketBySlug(slug: string): Promise<StandardMarket | null> {
     try {
-      const response = await axios.get(`${this.baseUrl}/slug/${slug}`);
-      const validatedData = ManifoldMarketSchema.parse(response.data);
+      const market = await manifoldLimiter.schedule(async () => {
+        logger.debug(`Fetching market ${slug} from Manifold...`);
+        
+        const response = await axios.get(`${this.baseUrl}/slug/${slug}`, {
+          timeout: 10000,
+        });
 
-      if (!this.isBinaryMarket(validatedData)) {
-        console.log(`Market "${slug}" is not a binary market`);
-        return null;
+        let validatedData;
+        try {
+          validatedData = ManifoldMarketSchema.parse(response.data);
+        } catch (zodError) {
+          throw new ValidationError(
+            `Invalid market data for ${slug}`,
+            response.data,
+            zodError
+          );
+        }
+
+        if (!this.isBinaryMarket(validatedData)) {
+          logger.warn(`Market "${slug}" is not a binary market`);
+          return null;
+        }
+
+        return this.toStandardMarket(validatedData);
+      });
+
+      if (market) {
+        logger.success(`Fetched market ${slug} from Manifold`);
       }
-
-      return this.toStandardMarket(validatedData);
+      return market;
     } catch (error) {
-      console.error(`Failed to fetch market ${slug}:`, error);
+      const classifiedError = classifyError(error, 'Manifold');
+      logger.error(`Failed to fetch market ${slug}: ${classifiedError.message}`);
       return null;
     }
   }
