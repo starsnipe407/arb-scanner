@@ -83,17 +83,20 @@ export class MarketMatcher {
         }
       }
 
-      // FILTER 2: Keyword Overlap
+      // FILTER 2: Keyword Overlap (STRICTER)
       // Extract words from titles (lowercase, remove punctuation)
       const wordsA = this.extractKeywords(targetMarket.title);
       const wordsB = this.extractKeywords(candidate.title);
 
-      // Check if they share at least 1 meaningful word
-      // Example: "Trump 2024" and "Presidential Trump" share "Trump"
-      const hasOverlap = wordsA.some(word => wordsB.includes(word));
-
-      if (!hasOverlap) {
-        return false; // No common words = different events
+      // Count how many keywords overlap
+      const overlapCount = wordsA.filter(word => wordsB.includes(word)).length;
+      
+      // Require at least 2 overlapping keywords (or 40% of smaller set)
+      // This prevents matching just because both mention "bitcoin" or "2025"
+      const minOverlap = Math.max(2, Math.min(wordsA.length, wordsB.length) * 0.4);
+      
+      if (overlapCount < minOverlap) {
+        return false; // Not enough common words = different events
       }
 
       // FILTER 3: Outcome Count (optional but useful)
@@ -115,23 +118,35 @@ export class MarketMatcher {
    * 2. Remove punctuation
    * 3. Split into words
    * 4. Filter out "stop words" (common words like "the", "will", "be")
+   * 5. Filter out common year/number patterns that appear everywhere
    * 
    * Example:
    * Input: "Will Trump win the 2024 election?"
-   * Output: ["trump", "win", "2024", "election"]
+   * Output: ["trump", "win", "election"]
    */
   private extractKeywords(title: string): string[] {
     // Stop words - common words we ignore because they don't help matching
     const stopWords = new Set([
       'will', 'the', 'be', 'in', 'on', 'at', 'to', 'a', 'an',
-      'is', 'are', 'was', 'were', 'for', 'of', 'by', 'or'
+      'is', 'are', 'was', 'were', 'for', 'of', 'by', 'or',
+      // Years - too common in prediction markets
+      '2024', '2025', '2026', '2027', '2028',
+      // Common prediction market words
+      'reach', 'hit', 'dip', 'end', 'before', 'after',
+      // Common question words
+      'what', 'when', 'where', 'who', 'how', 'why'
     ]);
 
     return title
       .toLowerCase()
       .replace(/[^\w\s]/g, ' ') // Remove punctuation: "Trump?" → "Trump "
       .split(/\s+/) // Split on whitespace: "Trump win" → ["Trump", "win"]
-      .filter(word => word.length > 2 && !stopWords.has(word)); // Remove short words and stop words
+      .filter(word => {
+        // Remove short words, stop words, and pure numbers
+        return word.length > 2 && 
+               !stopWords.has(word) &&
+               !/^\d+$/.test(word); // Remove pure numbers like "100000", "50000"
+      });
   }
 
   /**
@@ -173,9 +188,16 @@ export class MarketMatcher {
     // Get the best match (Fuse returns them sorted by score)
     const bestResult = results[0];
     
-    // Convert Fuse's score (0=perfect) to our convention (100=perfect)
     // Fuse score of 0.1 → our score of 90
     const confidenceScore = Math.round((1 - (bestResult.score || 0)) * 100);
+    
+    // Convert Fuse's score (0=perfect) to our convention (100=perfect)
+    // CRITICAL CHECK: Only return if it meets our minimum threshold
+    // This prevents returning terrible matches like "Tether" vs "hot tub"
+    if (confidenceScore < this.MATCH_THRESHOLD * 100) {
+      return null; // Score too low, reject this match
+    }
+
 
     // Return the match with metadata
     return {

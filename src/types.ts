@@ -28,6 +28,17 @@ export interface MarketMatch {
 }
 
 /**
+ * Fee structure for each platform
+ * Different platforms charge different fees - critical for arbitrage profitability
+ */
+export interface PlatformFees {
+  platform: 'POLYMARKET' | 'KALSHI' | 'MANIFOLD';
+  tradingFee: Decimal; // Fee charged when buying (e.g., 0.02 = 2%)
+  withdrawalFee?: Decimal; // Fee when withdrawing (optional)
+  description: string; // Human-readable explanation
+}
+
+/**
  * Arbitrage opportunity result
  */
 export interface ArbitrageOpportunity {
@@ -37,8 +48,13 @@ export interface ArbitrageOpportunity {
   outcomeB: string; // e.g., "No" on Platform B
   priceA: Decimal;
   priceB: Decimal;
-  totalCost: Decimal; // priceA + priceB
-  profitMargin: Decimal; // 1 - totalCost
-  roi: Decimal; // profitMargin / totalCost
+  totalCost: Decimal; // priceA + priceB (before fees)
+  feesA: Decimal; // Fees on platform A
+  feesB: Decimal; // Fees on platform B
+  totalFees: Decimal; // Total fees across both platforms
+  netCost: Decimal; // Total cost after fees
+  profitMargin: Decimal; // 1 - netCost
+  roi: Decimal; // profitMargin / netCost (as percentage)
+  isProfitable: boolean; // True if profit > 0 after fees
   timestamp: Date;
 }
