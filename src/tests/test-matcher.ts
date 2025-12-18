@@ -1,7 +1,7 @@
 import 'dotenv/config';
-import { PolyMarketAdapter } from './adapters/polymarket.js';
-import { MarketMatcher } from './matcher/index.js';
-import { StandardMarket } from './types.js';
+import { PolyMarketAdapter } from '../adapters/polymarket.js';
+import { MarketMatcher } from '../matcher/index.js';
+import { StandardMarket } from '../types.js';
 
 /**
  * Week 3 Test: Fuzzy Matching Demo

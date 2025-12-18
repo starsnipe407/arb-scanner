@@ -1,6 +1,6 @@
 import { Decimal } from 'decimal.js';
-import { StandardMarket, MarketMatch } from './types.js';
-import { ArbitrageCalculator } from './calculator/index.js';
+import { StandardMarket, MarketMatch } from '../types.js';
+import { ArbitrageCalculator } from '../calculator/index.js';
 
 /**
  * Week 4 Test: Arbitrage Calculator

@@ -1,10 +1,10 @@
 import 'dotenv/config';
 import { Decimal } from 'decimal.js';
-import { PolyMarketAdapter } from './adapters/polymarket.js';
-import { ManifoldAdapter } from './adapters/manifold.js';
-import { MarketMatcher } from './matcher/index.js';
-import { ArbitrageCalculator } from './calculator/index.js';
-import { StandardMarket } from './types.js';
+import { PolyMarketAdapter } from '../adapters/polymarket.js';
+import { ManifoldAdapter } from '../adapters/manifold.js';
+import { MarketMatcher } from '../matcher/index.js';
+import { ArbitrageCalculator } from '../calculator/index.js';
+import { StandardMarket } from '../types.js';
 
 /**
  * DEMO: Simulated Arbitrage Scanner

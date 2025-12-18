@@ -8,9 +8,13 @@
     "build": "tsc",
     "dev": "tsx watch src/index.ts",
     "scan": "tsx src/scan.ts",
-    "demo": "tsx src/demo-scanner.ts",
-    "test:matcher": "tsx src/test-matcher.ts",
-    "test:calculator": "tsx src/test-calculator.ts",
+    "scan:realtime": "tsx src/scheduler.ts",
+    "demo": "tsx src/tests/demo-scanner.ts",
+    "test:matcher": "tsx src/tests/test-matcher.ts",
+    "test:calculator": "tsx src/tests/test-calculator.ts",
+    "test:errors": "tsx src/tests/test-error-handling.ts",
+    "test:queue": "tsx src/tests/test-queue.ts",
+    "clear:redis": "tsx src/tests/clear-redis.ts",
     "start": "node dist/index.js",
     "test": "vitest"
   },
@@ -33,6 +37,8 @@
   },
   "dependencies": {
     "bottleneck": "^2.19.5",
-    "fuse.js": "^7.1.0"
+    "bullmq": "^5.66.1",
+    "fuse.js": "^7.1.0",
+    "ioredis": "^5.8.2"
   }
 }
