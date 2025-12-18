@@ -6,6 +6,7 @@
  */
 
 import { Decimal } from 'decimal.js';
+import 'dotenv/config';
 
 export const CONFIG = {
   /**
@@ -76,5 +77,23 @@ export const CONFIG = {
   logging: {
     verbose: false, // Set to true for detailed logs
     showProgressDots: true, // Show progress during scanning
+  },
+
+  /**
+   * Alert Configuration
+   */
+  alerts: {
+    enabled: process.env.ALERTS_ENABLED !== 'false', // Alerts on by default
+    discordWebhook: process.env.DISCORD_WEBHOOK_URL || '',
+    
+    // Minimum thresholds to trigger an alert
+    minProfitPercent: parseFloat(process.env.ALERT_MIN_PROFIT_PERCENT || '5'), // 5%
+    minProfitAmount: parseFloat(process.env.ALERT_MIN_PROFIT_AMOUNT || '10'), // $10
+    
+    // Cooldown period to prevent duplicate alerts (in minutes)
+    cooldownMinutes: parseInt(process.env.ALERT_COOLDOWN_MINUTES || '10', 10), // 10 minutes
+    
+    // Rate limiting for webhooks
+    maxAlertsPerMinute: 30, // Discord webhook limit
   },
 } as const;

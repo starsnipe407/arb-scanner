@@ -14,6 +14,7 @@ import { ArbitrageCalculator } from '../calculator/index.js';
 import { Cache, CacheKeys } from './redis.js';
 import { StandardMarket, ArbitrageOpportunity } from '../types.js';
 import { Decimal } from 'decimal.js';
+import { sendAlerts, meetsAlertThreshold } from './alerts.js';
 
 /**
  * Job data types
@@ -115,6 +116,13 @@ async function processScanJob(job: Job<ScanJobData>): Promise<ScanResult> {
     await job.updateProgress(90);
 
     logger.info(`Found ${opportunities.length} arbitrage opportunities`);
+
+    // Step 4: Send alerts for qualifying opportunities
+    const alertableOpportunities = opportunities.filter(meetsAlertThreshold);
+    if (alertableOpportunities.length > 0) {
+      logger.info(`${alertableOpportunities.length} opportunities meet alert threshold`);
+      await sendAlerts(alertableOpportunities);
+    }
 
     // Cache results
     const result: ScanResult = {

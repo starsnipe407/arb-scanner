@@ -155,6 +155,7 @@ export const CacheKeys = {
   opportunities: () => `opportunities:latest`,
   scanStatus: () => `scan:status`,
   scanResults: (timestamp: number) => `scan:results:${timestamp}`,
+  alertSent: (marketAId: string, marketBId: string) => `alert:sent:${marketAId}:${marketBId}`,
 };
 
 /**
