@@ -15,6 +15,9 @@
     "test:errors": "tsx src/tests/test-error-handling.ts",
     "test:queue": "tsx src/tests/test-queue.ts",
     "test:alerts": "tsx src/tests/test-alerts.ts",
+    "test:kalshi": "tsx src/tests/test-kalshi-api.ts",
+    "test:kalshi-adapter": "tsx src/tests/test-kalshi-adapter.ts",
+    "test:kalshi-integration": "tsx src/tests/test-kalshi-integration.ts",
     "clear:redis": "tsx src/tests/clear-redis.ts",
     "start": "node dist/index.js",
     "test": "vitest"

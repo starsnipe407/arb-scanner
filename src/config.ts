@@ -25,6 +25,12 @@ export const CONFIG = {
       defaultLimit: 50,
       maxLimit: 500,
     },
+    kalshi: {
+      baseUrl: 'https://api.elections.kalshi.com/trade-api/v2',
+      timeout: 10000, // ms
+      defaultLimit: 100,
+      maxLimit: 1000,
+    },
   },
 
   /**

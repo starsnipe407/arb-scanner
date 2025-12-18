@@ -32,15 +32,33 @@ async function startScheduler() {
       limit: 200,
     }, 60);
 
+    // Scan Kalshi vs PolyMarket every 60 seconds
+    await addRecurringScanJob({
+      platformA: 'KALSHI',
+      platformB: 'POLYMARKET',
+      limit: 100,
+    }, 60);
+
+    // Scan Kalshi vs Manifold every 60 seconds
+    await addRecurringScanJob({
+      platformA: 'KALSHI',
+      platformB: 'MANIFOLD',
+      limit: 100,
+    }, 60);
+
     logger.success('Recurring scans configured');
 
     // Step 3: Display status
     console.log('\n✅ Scanner is now running!');
     console.log('───────────────────────────');
     console.log('📊 Scan Frequency: Every 60 seconds');
-    console.log('🔍 Markets: PolyMarket (200) vs Manifold (200)');
+    console.log('🔍 Scanning Pairs:');
+    console.log('   • PolyMarket (200) vs Manifold (200)');
+    console.log('   • Kalshi (100) vs PolyMarket (100)');
+    console.log('   • Kalshi (100) vs Manifold (100)');
     console.log('💾 Caching: Enabled (2 min TTL)');
-    console.log('📈 Results: Stored for 1 hour\n');
+    console.log('📈 Results: Stored for 1 hour');
+    console.log('🚨 Alerts: Discord notifications enabled\n');
 
     // Step 4: Monitor queue stats every 30 seconds
     setInterval(async () => {

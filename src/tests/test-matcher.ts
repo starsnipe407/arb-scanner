@@ -2,6 +2,7 @@ import 'dotenv/config';
 import { PolyMarketAdapter } from '../adapters/polymarket.js';
 import { MarketMatcher } from '../matcher/index.js';
 import { StandardMarket } from '../types.js';
+import { KalshiAdapter } from '../adapters/kalshi.js';
 
 /**
  * Week 3 Test: Fuzzy Matching Demo
@@ -54,12 +55,14 @@ async function main() {
   // STEP 1: Fetch real PolyMarket data
   const polymarket = new PolyMarketAdapter();
   console.log('\n📥 Fetching markets from PolyMarket...');
-  const polyMarkets = await polymarket.fetchMarkets(10);
+  const polyMarkets = await polymarket.fetchMarkets(200);
   console.log(`✅ Fetched ${polyMarkets.length} markets`);
 
   // STEP 2: Create simulated Kalshi markets (rephrased versions)
-  console.log('\n🎭 Creating simulated Kalshi markets (rephrased titles)...');
-  const kalshiMarkets = createSimulatedKalshiMarkets(polyMarkets);
+  console.log('\n Fetching markets from Kalshi');
+  const kalshi = new KalshiAdapter();
+  const kalshiMarkets = await kalshi.fetchMarkets(200);
+  console.log(`✅ Fetched ${kalshiMarkets.length} markets from Kalshi`);
   
   console.log('\nSimulated Kalshi Markets:');
   kalshiMarkets.forEach((market, i) => {

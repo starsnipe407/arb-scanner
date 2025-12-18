@@ -9,6 +9,7 @@ import { redis } from './redis.js';
 import { logger } from '../utils/logger.js';
 import { PolyMarketAdapter } from '../adapters/polymarket.js';
 import { ManifoldAdapter } from '../adapters/manifold.js';
+import { KalshiAdapter } from '../adapters/kalshi.js';
 import { MarketMatcher } from '../matcher/index.js';
 import { ArbitrageCalculator } from '../calculator/index.js';
 import { Cache, CacheKeys } from './redis.js';
@@ -172,6 +173,9 @@ async function fetchMarketsWithCache(platform: string, limit: number): Promise<S
     markets = await adapter.fetchMarkets(limit);
   } else if (platform === 'MANIFOLD') {
     const adapter = new ManifoldAdapter();
+    markets = await adapter.fetchMarkets(limit);
+  } else if (platform === 'KALSHI') {
+    const adapter = new KalshiAdapter();
     markets = await adapter.fetchMarkets(limit);
   }
 
