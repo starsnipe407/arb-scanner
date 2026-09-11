@@ -285,11 +285,11 @@ await Cache.set(cacheKey, markets, 120); // ← Change this (seconds)
 
 ## Next Steps
 
-Once real-time scanning is working:
-1. ✅ Add alert system (Discord/Telegram)
-2. ✅ Build web dashboard to view results
-3. ✅ Add more platforms (Kalshi, PredictIt)
-4. ✅ Store historical data in database
+Current follow-up work:
+1. ✅ Discord alert delivery is integrated
+2. ⏳ Add a web dashboard to view results
+3. ⏳ Add more platform adapters
+4. ⏳ Store historical results in a database
 
 ---
 

@@ -9,6 +9,12 @@
     "dev": "tsx watch src/index.ts",
     "scan:realtime": "tsx src/scheduler.ts",
     "clear:redis": "tsx src/tests/clear-redis.ts",
+    "test:queue": "tsx src/tests/test-queue.ts",
+    "test:alerts": "tsx src/tests/test-alerts.ts",
+    "test:calculator": "tsx src/tests/test-calculator.ts",
+    "test:matcher": "tsx src/tests/test-matcher.ts",
+    "test:errors": "tsx src/tests/test-error-handling.ts",
+    "demo": "tsx src/tests/demo-scanner.ts",
     "start": "node dist/index.js",
     "test": "vitest"
   },
