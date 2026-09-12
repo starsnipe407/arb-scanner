@@ -6,6 +6,7 @@ import { manifoldLimiter } from '../utils/rateLimiter.js';
 import { APIError, ValidationError, classifyError } from '../utils/errors.js';
 import { logger } from '../utils/logger.js';
 import { retryWithBackoff } from '../utils/helpers.js';
+import { CONFIG } from '../config.js';
 
 /**
  * Zod schema for Manifold Markets API response validation
@@ -39,7 +40,7 @@ const ManifoldResponseSchema = z.array(ManifoldMarketSchema);
  * - Binary markets use probability: 0.60 = 60% chance = "Yes" costs $0.60
  */
 export class ManifoldAdapter {
-  private baseUrl = 'https://api.manifold.markets/v0';
+  private baseUrl = CONFIG.api.manifold.baseUrl;
 
   /**
    * Fetch binary markets (Yes/No only)

@@ -6,6 +6,7 @@ import { kalshiLimiter } from '../utils/rateLimiter.js';
 import { APIError, ValidationError, classifyError } from '../utils/errors.js';
 import { logger } from '../utils/logger.js';
 import { retryWithBackoff } from '../utils/helpers.js';
+import { CONFIG } from '../config.js';
 
 /**
  * Zod schema for Kalshi API response validation
@@ -48,7 +49,7 @@ type KalshiMarket = z.infer<typeof KalshiMarketSchema>;
  * API Docs: https://docs.kalshi.com/api-reference/market/get-markets
  */
 export class KalshiAdapter {
-  private baseUrl = 'https://api.elections.kalshi.com/trade-api/v2';
+  private baseUrl = CONFIG.api.kalshi.baseUrl;
 
   /**
    * Fetch active markets from Kalshi

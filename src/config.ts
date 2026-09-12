@@ -14,19 +14,19 @@ export const CONFIG = {
    */
   api: {
     polymarket: {
-      baseUrl: 'https://gamma-api.polymarket.com',
+      baseUrl: process.env.POLYMARKET_API_URL || 'https://gamma-api.polymarket.com',
       timeout: 10000, // ms
       defaultLimit: 50,
       maxLimit: 500,
     },
     manifold: {
-      baseUrl: 'https://api.manifold.markets/v0',
+      baseUrl: process.env.MANIFOLD_API_URL || 'https://api.manifold.markets/v0',
       timeout: 10000, // ms
       defaultLimit: 50,
       maxLimit: 500,
     },
     kalshi: {
-      baseUrl: 'https://api.elections.kalshi.com/trade-api/v2',
+      baseUrl: process.env.KALSHI_API_URL || 'https://api.elections.kalshi.com/trade-api/v2',
       timeout: 10000, // ms
       defaultLimit: 100,
       maxLimit: 1000,
@@ -89,7 +89,7 @@ export const CONFIG = {
    * Alert Configuration
    */
   alerts: {
-    enabled: process.env.ALERTS_ENABLED !== 'false', // Alerts on by default
+    enabled: process.env.ALERTS_ENABLED === 'true' && !!process.env.DISCORD_WEBHOOK_URL,
     discordWebhook: process.env.DISCORD_WEBHOOK_URL || '',
     
     // Minimum thresholds to trigger an alert

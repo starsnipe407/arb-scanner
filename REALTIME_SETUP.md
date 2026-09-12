@@ -1,5 +1,7 @@
 # 🚀 Real-Time Scanner Setup Guide
 
+See the [project README](README.md) for the scanner overview and current commands.
+
 ## Prerequisites
 
 You need **Redis** running locally or remotely.
@@ -72,7 +74,7 @@ $env:REDIS_PASSWORD="your-password"
 ### 1. Test Redis Connection
 
 ```powershell
-npm run test:queue
+npm run test:manual:queue
 ```
 
 **Expected output:**

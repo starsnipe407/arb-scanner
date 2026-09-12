@@ -1,4 +1,6 @@
-# Alert System - Setup Instructions
+# 🔔 Alert System - Setup Instructions
+
+See the [project README](README.md) for the scanner overview and current commands.
 
 ## 🎯 Quick Start
 
@@ -28,7 +30,7 @@ ALERT_COOLDOWN_MINUTES=10       # Don't re-alert same opportunity for 10 minutes
 ### 3. Test the Alert System
 
 ```bash
-npm run test:alerts
+npm run test:manual:alerts
 ```
 
 This will:
@@ -131,7 +133,7 @@ ALERT_MIN_PROFIT_AMOUNT=0
 
 ### Test Basic Alert
 ```bash
-npm run test:alerts
+npm run test:manual:alerts
 ```
 
 ### Test with Real Scanner

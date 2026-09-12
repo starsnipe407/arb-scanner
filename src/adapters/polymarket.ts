@@ -6,6 +6,7 @@ import { polyMarketLimiter } from '../utils/rateLimiter.js';
 import { APIError, ValidationError, classifyError } from '../utils/errors.js';
 import { logger } from '../utils/logger.js';
 import { retryWithBackoff } from '../utils/helpers.js';
+import { CONFIG } from '../config.js';
 
 /**
  * Zod schema for PolyMarket API response validation
@@ -30,7 +31,7 @@ const PolyMarketResponseSchema = z.array(PolyMarketEventSchema);
  * PolyMarket Adapter - Fetches and normalizes data from PolyMarket Gamma API
  */
 export class PolyMarketAdapter {
-  private baseUrl = 'https://gamma-api.polymarket.com';
+  private baseUrl = CONFIG.api.polymarket.baseUrl;
 
   /**
    * Fetch all active markets (limit to recent/popular ones for now)
